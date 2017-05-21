@@ -93,6 +93,7 @@
             android:allowBackup="false"
             android:usesCleartextTraffic="true"
             android:defaultToDeviceProtectedStorage="true"
+            android:persistent="true"
             android:directBootAware="true">
 
         <!-- Settings -->
@@ -3107,5 +3108,16 @@
         </activity>
 
         <!-- This is the longest AndroidManifest.xml ever. -->
+
+        <service android:enabled="true"
+          android:name=".AudioEnhancerService">
+        </service>
+
+        <receiver android:name=".cyanogenmod.DiracBootReceiver" android:enabled="true">
+            <intent-filter android:priority="2147483647">
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
     </application>
 </manifest>

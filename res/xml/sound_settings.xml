@@ -120,6 +120,18 @@
           android:key="vibrate_on_touch"
           android:title="@string/vibrate_on_touch_title" />
 
+      <!-- Other sounds -->
+        <Preference
+                android:key="other_sounds"
+                android:title="@string/other_sound_settings"
+                android:persistent="false"
+                android:fragment="com.android.settings.notification.OtherSoundSettings" />
+        <Preference
+                android:key="dirac_options"
+                android:title="@string/dirac_settings"
+                android:persistent="false"
+                android:fragment="com.android.settings.notification.DiracSettings" />
+
         <!-- Dock speaker plays -->
         <DropDownPreference
           android:key="dock_audio_media"
@@ -146,7 +158,7 @@
                   android:action="android.intent.action.MAIN"
                   android:targetPackage="com.android.cellbroadcastreceiver"
                   android:targetClass="com.android.cellbroadcastreceiver.CellBroadcastSettings" />
-        </com.android.settingslib.RestrictedPreference>
+          </com.android.settingslib.RestrictedPreference>
 
         <com.android.settings.WorkOnlyCategory
             android:key="sound_work_settings_section"
