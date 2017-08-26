@@ -20,6 +20,10 @@
     <string name="benzo_version">Benzo version</string>
     <string name="benzo_version_default">Unknown</string>
 
+    <!-- Linaro-GCC version -->
+    <string name="linaro_version">Gcc kernel</string>
+    <string name="linaro_version_default">Unknown</string>
+
     <!-- Expanded desktop -->
     <string name="power_menu_expanded_desktop">Expanded desktop</string>
     <string name="expanded_hide_nothing">Hide nothing</string>
