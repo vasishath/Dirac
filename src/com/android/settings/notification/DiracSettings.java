@@ -9,7 +9,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.content.res.Resources;
 import android.app.Activity;
-import com.android.internal.logging.MetricsProto.MetricsEvent;
+import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
 import android.support.v7.preference.ListPreference;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.Preference.OnPreferenceChangeListener;
@@ -66,7 +66,7 @@ public class DiracSettings extends SettingsPreferenceFragment {
     }
 
     @Override
-    protected int getMetricsCategory() {
+    public int getMetricsCategory() {
         return MetricsEvent.NOTIFICATION_OTHER_SOUND;
     }
 }
