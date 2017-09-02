@@ -470,7 +470,7 @@ public class ManageApplications extends InstrumentedPreferenceFragment
             case LIST_TYPE_MOVIES:
                 return mSortOrder == R.id.sort_order_alpha;
             default:
-                return false;
+                return true;
         }
     }
 
@@ -640,9 +640,11 @@ public class ManageApplications extends InstrumentedPreferenceFragment
         final Context context = getActivity();
         mOptionsMenu.findItem(R.id.advanced).setVisible(false);
 
-        mOptionsMenu.findItem(R.id.sort_order_alpha).setVisible(mListType == LIST_TYPE_STORAGE
+        mOptionsMenu.findItem(R.id.sort_order_alpha).setVisible( 
+                (mListType == LIST_TYPE_STORAGE || mListType == LIST_TYPE_MAIN)
                 && mSortOrder != R.id.sort_order_alpha);
-        mOptionsMenu.findItem(R.id.sort_order_size).setVisible(mListType == LIST_TYPE_STORAGE
+        mOptionsMenu.findItem(R.id.sort_order_size).setVisible( 
+                (mListType == LIST_TYPE_STORAGE || mListType == LIST_TYPE_MAIN)
                 && mSortOrder != R.id.sort_order_size);
 
         mOptionsMenu.findItem(R.id.show_system).setVisible(!mShowSystem
@@ -1102,7 +1104,7 @@ public class ManageApplications extends InstrumentedPreferenceFragment
         }
 
         private void rebuildSections() {
-            if (mEntries!= null && mManageApplications.mListView.isFastScrollEnabled()) {
+            if (mEntries!= null && mManageApplications.isFastScrollEnabled()) {
                 // Rebuild sections
                 if (mIndex == null) {
                     LocaleList locales = mContext.getResources().getConfiguration().getLocales();
