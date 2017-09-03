@@ -134,7 +134,6 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
     private static final String MSAA_PROPERTY = "debug.egl.force_msaa";
     private static final String OPENGL_TRACES_PROPERTY = "debug.egl.trace";
     private static final String TUNER_UI_KEY = "tuner_ui";
-    private static final String COLOR_TEMPERATURE_PROPERTY = "persist.sys.debug.color_temp";
 
     private static final String DEBUG_APP_KEY = "debug_app";
     private static final String WAIT_FOR_DEBUGGER_KEY = "wait_for_debugger";
@@ -193,7 +192,6 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
     private static final String WIFI_ALLOW_SCAN_WITH_TRAFFIC_KEY = "wifi_allow_scan_with_traffic";
     private static final String USB_CONFIGURATION_KEY = "select_usb_configuration";
     private static final String MOBILE_DATA_ALWAYS_ON = "mobile_data_always_on";
-    private static final String KEY_COLOR_MODE = "color_mode";
     private static final String FORCE_RESIZABLE_KEY = "force_resizable_activities";
     private static final String COLOR_TEMPERATURE_KEY = "color_temperature";
 
@@ -232,8 +230,6 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
 
     private static final String KEY_CONVERT_FBE = "convert_to_file_encryption";
 
-    private static final String OTA_DISABLE_AUTOMATIC_UPDATE_KEY = "ota_disable_automatic_update";
-
     private static final int RESULT_DEBUG_APP = 1000;
     private static final int RESULT_MOCK_LOCATION_APP = 1001;
 
@@ -258,6 +254,9 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
 
     private boolean mHaveDebugSettings;
     private boolean mDontPokeProperties;
+
+    private boolean mOtaDisabledOnce = false;
+
     private SwitchPreference mEnableAdb;
     private Preference mClearAdbKeys;
     private SwitchPreference mEnableTerminal;
@@ -292,7 +291,6 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
     private ListPreference mBluetoothSelectA2dpChannelMode;
     private ListPreference mBluetoothSelectA2dpLdacPlaybackQuality;
 
-    private SwitchPreference mOtaDisableAutomaticUpdate;
     private SwitchPreference mWifiAllowScansWithTraffic;
     private SwitchPreference mStrictMode;
     private SwitchPreference mPointerLocation;
@@ -330,11 +328,7 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
 
     private SwitchPreference mShowNotificationChannelWarnings;
 
-    private ColorModePreference mColorModePreference;
-
     private SwitchPreference mForceResizable;
-
-    private SwitchPreference mColorTemperaturePreference;
 
     private final ArrayList<Preference> mAllPrefs = new ArrayList<Preference>();
 
@@ -354,8 +348,6 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
     private Dialog mLogpersistClearDialog;
     private DashboardFeatureProvider mDashboardFeatureProvider;
     private DevelopmentSettingsEnabler mSettingsEnabler;
-    private BugReportPreferenceController mBugReportController;
-    private BugReportInPowerPreferenceController mBugReportInPowerController;
     private TelephonyMonitorPreferenceController mTelephonyMonitorController;
 
     public DevelopmentSettings() {
@@ -391,8 +383,6 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
 
         mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 
-        mBugReportController = new BugReportPreferenceController(getActivity());
-        mBugReportInPowerController = new BugReportInPowerPreferenceController(getActivity());
         mTelephonyMonitorController = new TelephonyMonitorPreferenceController(getActivity());
         mWebViewAppPrefController = new WebViewAppPreferenceController(getActivity());
         mVerifyAppsOverUsbController = new VerifyAppsOverUsbPreferenceController(getActivity());
@@ -424,8 +414,6 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
             mEnableTerminal = null;
         }
 
-        mBugReportController.displayPreference(getPreferenceScreen());
-        mBugReportInPowerController.displayPreference(getPreferenceScreen());
         mTelephonyMonitorController.displayPreference(getPreferenceScreen());
         mWebViewAppPrefController.displayPreference(getPreferenceScreen());
 
@@ -554,22 +542,22 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
             removePreference(KEY_CONVERT_FBE);
         }
 
-        mOtaDisableAutomaticUpdate = findAndInitSwitchPref(OTA_DISABLE_AUTOMATIC_UPDATE_KEY);
-
-        mColorModePreference = (ColorModePreference) findPreference(KEY_COLOR_MODE);
-        mColorModePreference.updateCurrentAndSupported();
-        if (mColorModePreference.getColorModeCount() < 2) {
-            removePreference(KEY_COLOR_MODE);
-            mColorModePreference = null;
+        /* With this commit we are removing the user switch, but this is a System API and as Google
+            says in the original commit this value is set internally (and its code is within Google services too).
+            Indeed the related frameworks base commit just publishes the String, but the main code is
+            somewhere else.
+            So, to be sure the automatic update function is really kept disabled, we are forcing it to disabled
+            (it means we are enabling the "disable automatic ota" feature) at least once in the onCreate method.*/
+        final ContentResolver cr = getActivity().getContentResolver();
+        if (!mOtaDisabledOnce && 
+                (Settings.Global.getInt(cr, Settings.Global.OTA_DISABLE_AUTOMATIC_UPDATE, 0) != 1)) {
+            Settings.Global.putInt(cr, Settings.Global.OTA_DISABLE_AUTOMATIC_UPDATE, 1);
+            mOtaDisabledOnce = true;
         }
 
-        mColorTemperaturePreference = (SwitchPreference) findPreference(COLOR_TEMPERATURE_KEY);
-        if (getResources().getBoolean(R.bool.config_enableColorTemperature)) {
-            mAllPrefs.add(mColorTemperaturePreference);
-            mResetSwitchPrefs.add(mColorTemperaturePreference);
-        } else {
-            removePreference(COLOR_TEMPERATURE_KEY);
-            mColorTemperaturePreference = null;
+        if (Settings.Secure.getInt(cr,
+                Settings.Secure.BUGREPORT_IN_POWER_MENU, 0) == 1) {
+            Settings.Secure.putInt(cr, Settings.Secure.BUGREPORT_IN_POWER_MENU, 0);
         }
 
         addDashboardCategoryPreferences();
@@ -646,7 +634,6 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
             Preference pref = mAllPrefs.get(i);
             pref.setEnabled(enabled && !mDisabledPrefs.contains(pref));
         }
-        mBugReportInPowerController.enablePreference(enabled);
         mTelephonyMonitorController.enablePreference(enabled);
         mWebViewAppPrefController.enablePreference(enabled);
         updateAllOptions();
@@ -693,18 +680,11 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
         }
         mSwitchBar.show();
 
-        if (mColorModePreference != null) {
-            mColorModePreference.startListening();
-            mColorModePreference.updateCurrentAndSupported();
-        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        if (mColorModePreference != null) {
-            mColorModePreference.stopListening();
-        }
     }
 
     @Override
@@ -765,7 +745,6 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
                     context.getPackageManager().getApplicationEnabledSetting(TERMINAL_APP_PACKAGE)
                             == PackageManager.COMPONENT_ENABLED_STATE_ENABLED);
         }
-        mHaveDebugSettings |= mBugReportInPowerController.updatePreference();
         mHaveDebugSettings |= mTelephonyMonitorController.updatePreference();
         updateSwitchPreference(mKeepScreenOn, Settings.Global.getInt(cr,
                 Settings.Global.STAY_ON_WHILE_PLUGGED_IN, 0) != 0);
@@ -799,8 +778,6 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
         updateShowAllANRsOptions();
         updateShowNotificationChannelWarningsOptions();
         mVerifyAppsOverUsbController.updatePreference();
-        updateOtaDisableAutomaticUpdateOptions();
-        updateBugreportOptions();
         updateForceRtlOptions();
         updateLogdSizeValues();
         updateLogpersistValues();
@@ -815,9 +792,6 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
         Preference webViewAppPref = findPreference(mWebViewAppPrefController.getPreferenceKey());
         mWebViewAppPrefController.updateState(webViewAppPref);
         updateOemUnlockOptions();
-        if (mColorTemperaturePreference != null) {
-            updateColorTemperature();
-        }
         updateBluetoothDisableAbsVolumeOptions();
         updateBluetoothEnableInbandRingingOptions();
         updateBluetoothA2dpConfigurationValues();
@@ -832,7 +806,6 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
                 onPreferenceTreeClick(cb);
             }
         }
-        mBugReportInPowerController.resetPreference();
         resetDebuggerOptions();
         writeLogpersistOption(null, true);
         writeLogdSizeOption(null);
@@ -996,24 +969,6 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
         }
     }
 
-    private void updateOtaDisableAutomaticUpdateOptions() {
-        // We use the "disabled status" in code, but show the opposite text
-        // "Automatic system updates" on screen. So a value 0 indicates the
-        // automatic update is enabled.
-        updateSwitchPreference(mOtaDisableAutomaticUpdate, Settings.Global.getInt(
-                getActivity().getContentResolver(),
-                Settings.Global.OTA_DISABLE_AUTOMATIC_UPDATE, 0) != 1);
-    }
-
-    private void writeOtaDisableAutomaticUpdateOptions() {
-        // We use the "disabled status" in code, but show the opposite text
-        // "Automatic system updates" on screen. So a value 0 indicates the
-        // automatic update is enabled.
-        Settings.Global.putInt(getActivity().getContentResolver(),
-                Settings.Global.OTA_DISABLE_AUTOMATIC_UPDATE,
-                mOtaDisableAutomaticUpdate.isChecked() ? 0 : 1);
-    }
-
     private static boolean showEnableOemUnlockPreference() {
         return !SystemProperties.get(PERSISTENT_DATA_BLOCK_PROP).equals("");
     }
@@ -1039,11 +994,6 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
                 mEnableOemUnlock.checkRestrictionAndSetDisabled(UserManager.DISALLOW_OEM_UNLOCK);
             }
         }
-    }
-
-    private void updateBugreportOptions() {
-        mBugReportController.enablePreference(true);
-        mBugReportInPowerController.updateBugreportOptions();
     }
 
     // Returns the current state of the system property that controls
@@ -1359,18 +1309,6 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
             Settings.Secure.putInt(cr, Settings.Secure.ACCESSIBILITY_DISPLAY_DALTONIZER_ENABLED, 1);
             Settings.Secure.putInt(cr, Settings.Secure.ACCESSIBILITY_DISPLAY_DALTONIZER, newMode);
         }
-    }
-
-    private void updateColorTemperature() {
-        updateSwitchPreference(mColorTemperaturePreference,
-                SystemProperties.getBoolean(COLOR_TEMPERATURE_PROPERTY, false));
-    }
-
-    private void writeColorTemperature() {
-        SystemProperties.set(COLOR_TEMPERATURE_PROPERTY,
-                mColorTemperaturePreference.isChecked() ? "1" : "0");
-        pokeSystemProperties();
-        Toast.makeText(getActivity(), R.string.color_temperature_toast, Toast.LENGTH_LONG).show();
     }
 
     private void updateUSBAudioOptions() {
@@ -2381,10 +2319,6 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
             return false;
         }
 
-        if (mBugReportInPowerController.handlePreferenceTreeClick(preference)) {
-            return true;
-        }
-
         if (mTelephonyMonitorController.handlePreferenceTreeClick(preference)) {
             return true;
         }
@@ -2412,7 +2346,6 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
                 Settings.Global.putInt(getActivity().getContentResolver(),
                         Settings.Global.ADB_ENABLED, 0);
                 mVerifyAppsOverUsbController.updatePreference();
-                updateBugreportOptions();
             }
         } else if (preference == mClearAdbKeys) {
             if (mAdbKeysDialog != null) dismissDialogs();
@@ -2461,8 +2394,6 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
             startActivityForResult(intent, RESULT_DEBUG_APP);
         } else if (preference == mWaitForDebugger) {
             writeDebuggerOptions();
-        } else if (preference == mOtaDisableAutomaticUpdate) {
-            writeOtaDisableAutomaticUpdateOptions();
         } else if (preference == mStrictMode) {
             writeStrictModeVisualOptions();
         } else if (preference == mPointerLocation) {
@@ -2501,8 +2432,6 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
             writeWifiAllowScansWithTrafficOptions();
         } else if (preference == mMobileDataAlwaysOn) {
             writeMobileDataAlwaysOnOptions();
-        } else if (preference == mColorTemperaturePreference) {
-            writeColorTemperature();
         } else if (preference == mUSBAudio) {
             writeUSBAudioOptions();
         } else if (preference == mForceResizable) {
@@ -2611,7 +2540,6 @@ public class DevelopmentSettings extends RestrictedSettingsFragment
                 Settings.Global.putInt(getActivity().getContentResolver(),
                         Settings.Global.ADB_ENABLED, 1);
                 mVerifyAppsOverUsbController.updatePreference();
-                updateBugreportOptions();
             } else {
                 // Reset the toggle
                 mEnableAdb.setChecked(false);

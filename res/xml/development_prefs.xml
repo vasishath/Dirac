@@ -17,10 +17,6 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:settings="http://schemas.android.com/apk/res/com.android.settings"
         android:title="@string/development_settings_title">
-    <com.android.settings.BugreportPreference
-            android:key="bugreport"
-            android:title="@*android:string/bugreport_title"
-            android:dialogTitle="@*android:string/bugreport_title" />
 
     <Preference
             android:key="local_backup_password"
@@ -69,24 +65,10 @@
         android:summary="@string/convert_to_file_encryption_enabled"
         android:fragment="com.android.settings.applications.ConvertToFbe" />
 
-    <com.android.settings.development.ColorModePreference
-        android:key="color_mode"
-        android:title="@string/picture_color_mode"
-        android:summary="@string/picture_color_mode_desc" />
-
     <Preference android:key="select_webview_provider"
         android:title="@string/select_webview_provider_title"
         android:dialogTitle="@string/select_webview_provider_dialog_title"
         android:fragment="com.android.settings.webview.WebViewAppPicker" />
-
-    <SwitchPreference
-        android:key="color_temperature"
-        android:title="@string/color_temperature"
-        android:summary="@string/color_temperature_desc" />
-
-    <SwitchPreference
-        android:key="ota_disable_automatic_update"
-        android:title="@string/ota_disable_automatic_update" />
 
     <Preference
         android:key="demo_mode"
@@ -117,11 +99,6 @@
             android:key="enable_terminal"
             android:title="@string/enable_terminal_title"
             android:summary="@string/enable_terminal_summary" />
-
-        <SwitchPreference
-            android:key="bugreport_in_power"
-            android:title="@string/bugreport_in_power"
-            android:summary="@string/bugreport_in_power_summary"/>
 
         <Preference android:key="mock_location_app"
             android:title="@string/mock_location_app" />
