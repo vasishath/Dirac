@@ -120,12 +120,6 @@
           android:key="vibrate_on_touch"
           android:title="@string/vibrate_on_touch_title" />
 
-      <!-- Other sounds -->
-        <Preference
-                android:key="other_sounds"
-                android:title="@string/other_sound_settings"
-                android:persistent="false"
-                android:fragment="com.android.settings.notification.OtherSoundSettings" />
         <Preference
                 android:key="dirac_options"
                 android:title="@string/dirac_settings"
