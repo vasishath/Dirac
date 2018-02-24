@@ -73,6 +73,7 @@ public class AudioEnhancerUtils
     } else {
       i = 0;
     }
+    mAudEnhncr.setEnabled(paramBoolean);
     mAudEnhncr.setMusic(i);
     return;
   }
